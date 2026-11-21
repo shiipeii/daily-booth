@@ -1,0 +1,69 @@
+/* design tokens. light = "old polaroid", dark = "faded night".
+   prints stay paper-coloured in both modes, like real photos. */
+
+:root {
+  --font: "Courier Prime", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --bg: #e4dfd7;
+  --surface: #ece8e1;        /* sheets, inputs */
+  --track: #d6cfc4;          /* segmented control track */
+  --ink: #3b3632;
+  --ink-muted: #5f5852;
+  --ink-faint: #8a8279;
+  --line: #c9c1b5;
+  --accent: #8e5c57;         /* dusty rose */
+  --on-accent: #ffffff;
+  --paper: #f4f1eb;
+  --paper-ink: #5a534c;
+  --photo-empty: #8c7766;
+  --danger: #8f3f36;
+  --shadow-print: 0 1px 1px rgba(40, 32, 26, 0.08), 0 18px 36px -14px rgba(40, 32, 26, 0.38);
+
+  --camera-bg: #1c1917;
+  --camera-ink: #ede6da;
+  --camera-muted: #b3aa9d;
+
+  --radius-pill: 999px;
+  --radius-md: 14px;
+  --page-x: 24px;
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #3a3532;
+  --surface: #443e3a;
+  --track: #4b4540;
+  --ink: #ede6da;
+  --ink-muted: #bfb5a8;
+  --ink-faint: #958b7f;
+  --line: #57504a;
+  --accent: #c9918a;         /* the same rose, lifted for dark */
+  --on-accent: #2a2522;
+  --paper: #ede6da;
+  --paper-ink: #5a534c;
+  --photo-empty: #7a6656;
+  --danger: #e09085;
+  --shadow-print: 0 1px 1px rgba(0, 0, 0, 0.25), 0 20px 40px -14px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #3a3532;
+    --surface: #443e3a;
+    --track: #4b4540;
+    --ink: #ede6da;
+    --ink-muted: #bfb5a8;
+    --ink-faint: #958b7f;
+    --line: #57504a;
+    --accent: #c9918a;
+    --on-accent: #2a2522;
+    --paper: #ede6da;
+    --paper-ink: #5a534c;
+    --photo-empty: #7a6656;
+    --danger: #e09085;
+    --shadow-print: 0 1px 1px rgba(0, 0, 0, 0.25), 0 20px 40px -14px rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+}
