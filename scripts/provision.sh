@@ -13,6 +13,7 @@
 #   4. points auth at the web app and turns off email confirmation (two-person app)
 
 set -euo pipefail
+export SUPABASE_YES=1   # supabase cli v3: answer yes to prompts in ci
 
 : "${SUPABASE_ACCESS_TOKEN:?add the SUPABASE_ACCESS_TOKEN secret}"
 : "${SUPABASE_PROJECT_REF:?add the SUPABASE_PROJECT_REF secret}"
@@ -35,8 +36,8 @@ sql() { # query -> json rows
 }
 
 echo "› applying migrations"
-supabase link --project-ref "$REF" --password "$SUPABASE_DB_PASSWORD"
-supabase db push --password "$SUPABASE_DB_PASSWORD"
+supabase link --project-ref "$REF" --yes
+supabase db push --remote --password "$SUPABASE_DB_PASSWORD" --yes
 
 echo "› web push keys"
 VAPID_PUBLIC=$(sql "select value from public.app_config where key = 'vapid_public_key'" | jq -r '.[0].value // empty')
@@ -44,7 +45,7 @@ if [ -z "$VAPID_PUBLIC" ]; then
   KEYS=$(npx --yes web-push@3.6.7 generate-vapid-keys --json)
   VAPID_PUBLIC=$(echo "$KEYS" | jq -r .publicKey)
   VAPID_PRIVATE=$(echo "$KEYS" | jq -r .privateKey)
-  supabase secrets set --project-ref "$REF" \
+  supabase secrets set --yes \
     "VAPID_PUBLIC_KEY=$VAPID_PUBLIC" \
     "VAPID_PRIVATE_KEY=$VAPID_PRIVATE" \
     "VAPID_SUBJECT=${VAPID_SUBJECT:-mailto:hello@example.com}"
@@ -59,7 +60,7 @@ echo "› cron secret"
 HAS_SECRET=$(sql "select count(*)::int as n from vault.secrets where name = 'cron_secret'" | jq -r '.[0].n')
 if [ "$HAS_SECRET" = "0" ]; then
   CRON_SECRET=$(openssl rand -hex 32)
-  supabase secrets set --project-ref "$REF" "CRON_SECRET=$CRON_SECRET"
+  supabase secrets set --yes "CRON_SECRET=$CRON_SECRET"
   sql "select vault.create_secret('$CRON_SECRET', 'cron_secret');
        select vault.create_secret('$PROJECT_URL', 'project_url')
        where not exists (select 1 from vault.secrets where name = 'project_url');" > /dev/null
@@ -69,7 +70,7 @@ else
 fi
 
 echo "› deploying the ping function"
-supabase functions deploy tick --project-ref "$REF" --no-verify-jwt
+supabase functions deploy tick --no-verify-jwt --use-api --yes
 
 echo "› auth settings"
 SITE="${SITE_URL:-http://localhost:5173}"
