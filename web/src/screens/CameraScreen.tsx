@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { FILMS, FILM_ORDER, cropFile, cropToCanvas, develop, makePrint, toJpeg } from "../lib/film";
-import { ON_TIME_MINUTES, countdown, printDate } from "../lib/dates";
+import { printDate } from "../lib/dates";
 import type { Day, Film, Mode } from "../lib/types";
 import { Icon } from "../components/Icon";
 import { Print } from "../components/Print";
@@ -38,7 +38,6 @@ export function CameraScreen({
   const [dateStamp, setDateStamp] = useState(() => localStorage.getItem(DATE_KEY) !== "off");
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const now = useTick();
 
   useEffect(() => localStorage.setItem(FILM_KEY, film), [film]);
   useEffect(() => localStorage.setItem(DATE_KEY, dateStamp ? "on" : "off"), [dateStamp]);
@@ -106,9 +105,6 @@ export function CameraScreen({
     }
   }
 
-  const sentAt = day.ping_sent_at ? new Date(day.ping_sent_at).getTime() : new Date(day.ping_at).getTime();
-  const msLeft = sentAt + ON_TIME_MINUTES * 60_000 - now;
-
   return (
     <div className="camera">
       <main className="screen">
@@ -117,9 +113,7 @@ export function CameraScreen({
             <Icon name="close" />
           </button>
           <span style={{ color: "var(--camera-muted)", fontSize: 15 }}>{mode}</span>
-          <span style={{ width: 44, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
-            {msLeft > 0 ? countdown(msLeft) : ""}
-          </span>
+          <span style={{ width: 44 }} aria-hidden="true" />
         </header>
 
         <div className="camera__print">
@@ -177,11 +171,3 @@ export function CameraScreen({
   );
 }
 
-function useTick() {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
-  return now;
-}

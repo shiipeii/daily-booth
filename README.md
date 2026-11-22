@@ -66,7 +66,6 @@ free services only: **supabase** (database, photo storage, the ping job) and
 ## change things
 
 - **ping hours:** in the app, settings → daily ping (default 10 am to 10 pm).
-- **on-time window:** `ON_TIME_MINUTES` in `web/src/lib/dates.ts`.
 - **film looks:** `FILMS` in `web/src/lib/film.ts`.
 - **colours:** `web/src/styles/tokens.css`.
 - **notification text:** `PING_MESSAGE` in `supabase/functions/tick/index.ts`.

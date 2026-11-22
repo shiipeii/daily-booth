@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
 import { setMode } from "../lib/api";
-import { ON_TIME_MINUTES, countdown, hourLabel, printDate } from "../lib/dates";
+import { hourLabel, printDate } from "../lib/dates";
 import type { PushState } from "../lib/push";
 import type { Booth, Mode, Photo } from "../lib/types";
 import type { TodayData } from "../hooks/useToday";
@@ -20,8 +19,6 @@ interface Props {
 }
 
 export function TodayScreen({ booth, today, error, pushState, onRefresh, onOpenCamera, onOpenDay, onOpenSettings }: Props) {
-  const now = useNow();
-
   if (!today) {
     return (
       <div className="screen__body">
@@ -38,11 +35,9 @@ export function TodayScreen({ booth, today, error, pushState, onRefresh, onOpenC
   const theirs = latest(photos.filter((p) => p.taken_by !== booth.userId));
   const anyPhoto = latest(photos);
 
-  // the ping counts as "arrived" once the server sent it, or once its time has passed
-  const pingAt = new Date(day.ping_at).getTime();
-  const sentAt = day.ping_sent_at ? new Date(day.ping_sent_at).getTime() : null;
-  const arrivedAt = sentAt ?? (pingAt <= now ? pingAt : null);
-  const msLeft = arrivedAt ? arrivedAt + ON_TIME_MINUTES * 60_000 - now : 0;
+  // the ping counts as "arrived" once the server sent it, or once its time has passed.
+  // after that there's no timer: you have until midnight.
+  const arrivedAt = day.ping_sent_at ?? (new Date(day.ping_at).getTime() <= Date.now() ? day.ping_at : null);
 
   async function chooseMode(next: Mode) {
     await setMode(day.id, next);
@@ -75,15 +70,10 @@ export function TodayScreen({ booth, today, error, pushState, onRefresh, onOpenC
                       it'll come between {hourLabel(booth.couple.ping_window_start)} and {hourLabel(booth.couple.ping_window_end)}
                     </span>
                   </>
-                ) : msLeft > 0 ? (
-                  <>
-                    <span className="today__big">{countdown(msLeft)}</span>
-                    <span className="small">left to take today's photo</span>
-                  </>
                 ) : (
                   <>
-                    <span style={{ fontSize: 20, fontWeight: 700 }}>running late</span>
-                    <span className="small">that's fine, it still counts today</span>
+                    <span style={{ fontSize: 20, fontWeight: 700 }}>time for today's photo</span>
+                    <span className="small">you have until midnight</span>
                   </>
                 )}
               </div>
@@ -200,11 +190,3 @@ function latest(photos: Photo[]): Photo | null {
   return photos.length ? photos[photos.length - 1] : null;
 }
 
-function useNow(intervalMs = 1000) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), intervalMs);
-    return () => clearInterval(t);
-  }, [intervalMs]);
-  return now;
-}

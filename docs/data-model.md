@@ -44,5 +44,5 @@ status is never stored. the `day_summary` view works it out:
    random `ping_at` inside the couple's window.
 3. once `ping_at` passes, `tick` marks the day `ping_sent_at` and sends a web
    push to every subscribed phone of both members.
-4. a photo is "on time" if taken within 5 minutes of `ping_sent_at`
-   (`ON_TIME_MINUTES` in `web/src/lib/dates.ts`). late photos still count.
+4. there's no timer: after the ping you have until midnight (your
+   timezone) to take the day's photo. after that, an empty day shows as missed.

@@ -13,7 +13,7 @@ import webpush from "npm:web-push@3.6.7";
 
 const PING_MESSAGE = {
   title: "daily booth",
-  body: "time for today's photo. together or apart, you've got 5 minutes.",
+  body: "time for today's photo. together or apart, you have until midnight.",
   url: "./",
 };
 

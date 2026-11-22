@@ -1,8 +1,5 @@
 // all dates in the app are local calendar dates (yyyy-mm-dd) in the couple's timezone.
 
-/** minutes after the ping that still count as "on time" */
-export const ON_TIME_MINUTES = 5;
-
 export function localDate(timeZone: string, at: Date = new Date()): string {
   // en-CA formats as yyyy-mm-dd
   return new Intl.DateTimeFormat("en-CA", {
@@ -82,15 +79,4 @@ export function monthBounds(year: number, month: number) {
   const last = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
   const firstWeekday = new Date(Date.UTC(year, month - 1, 1)).getUTCDay(); // 0 = sunday
   return { first, last, lastDay, firstWeekday };
-}
-
-export function isOnTime(takenAt: string, pingSentAt: string | null): boolean {
-  if (!pingSentAt) return true;
-  return new Date(takenAt).getTime() - new Date(pingSentAt).getTime() <= ON_TIME_MINUTES * 60_000;
-}
-
-/** "4:59" */
-export function countdown(ms: number): string {
-  const total = Math.max(0, Math.ceil(ms / 1000));
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }

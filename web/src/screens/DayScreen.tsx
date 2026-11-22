@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { deletePhoto, downloadPhoto, loadPhotos, loadSummaries, photoUrls } from "../lib/api";
 import { saveToCameraRoll } from "../lib/cameraRoll";
-import { clockTime, isOnTime, longDate } from "../lib/dates";
+import { clockTime, longDate } from "../lib/dates";
 import type { Booth, DaySummary, Photo } from "../lib/types";
 import { Icon } from "../components/Icon";
 import { PrintImage } from "../components/Print";
@@ -90,7 +90,6 @@ export function DayScreen({ booth, date, onBack, onChanged }: { booth: Booth; da
                 <PrintImage src={data.urls[p.film_path]} alt={`photo by ${nameOf(p.taken_by)}`} />
                 <figcaption className="day__meta">
                   {nameOf(p.taken_by)} at {clockTime(p.taken_at, booth.couple.timezone)}
-                  {isOnTime(p.taken_at, data.summary.ping_sent_at) ? ", on time" : ", a little late"}
                 </figcaption>
                 <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap", marginTop: 4 }}>
                   <button className="link" type="button" onClick={() => save(p, "film")} disabled={!data.blobs[p.film_path]}>

@@ -11,7 +11,6 @@
 
 import { Zip, ZipPassThrough, strToU8 } from "fflate";
 import { downloadPhoto, loadAllDays, loadAllPhotos, loadSummaries } from "./api";
-import { isOnTime } from "./dates";
 import type { Booth } from "./types";
 
 export async function buildExport(booth: Booth, onProgress: (done: number, total: number) => void): Promise<File> {
@@ -39,7 +38,6 @@ export async function buildExport(booth: Booth, onProgress: (done: number, total
         id: p.id,
         taken_by: names[p.taken_by] ?? p.taken_by,
         taken_at: p.taken_at,
-        on_time: isOnTime(p.taken_at, d.ping_sent_at),
         film: p.film,
         date_stamp: p.date_stamp,
         film_file: fileName(p.film_path),
@@ -47,13 +45,13 @@ export async function buildExport(booth: Booth, onProgress: (done: number, total
       })),
   }));
 
-  const csvRows = [["date", "mode", "status", "caption", "taken_by", "taken_at", "on_time", "film", "film_file", "original_file"]];
+  const csvRows = [["date", "mode", "status", "caption", "taken_by", "taken_at", "film", "film_file", "original_file"]];
   for (const day of manifest) {
     if (day.photos.length === 0) {
-      csvRows.push([day.date, day.mode, day.status, day.caption ?? "", "", "", "", "", "", ""]);
+      csvRows.push([day.date, day.mode, day.status, day.caption ?? "", "", "", "", "", ""]);
     }
     for (const p of day.photos) {
-      csvRows.push([day.date, day.mode, day.status, day.caption ?? "", p.taken_by, p.taken_at, String(p.on_time), p.film, p.film_file, p.original_file]);
+      csvRows.push([day.date, day.mode, day.status, day.caption ?? "", p.taken_by, p.taken_at, p.film, p.film_file, p.original_file]);
     }
   }
   const csv = csvRows.map((r) => r.map(csvCell).join(",")).join("\n");
