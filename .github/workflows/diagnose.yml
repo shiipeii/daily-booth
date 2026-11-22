@@ -28,3 +28,4 @@ jobs:
             end;
             return r;
           end \$f\$; select pg_temp.diag();"
+# rerun 1795318580
