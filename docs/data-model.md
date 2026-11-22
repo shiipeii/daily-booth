@@ -43,6 +43,7 @@ status is never stored. the `day_summary` view works it out:
 2. `tick` makes sure each couple has a `days` row for today. a new row gets a
    random `ping_at` inside the couple's window.
 3. once `ping_at` passes, `tick` marks the day `ping_sent_at` and sends a web
-   push to every subscribed phone of both members.
-4. there's no timer: after the ping you have until midnight (your
-   timezone) to take the day's photo. after that, an empty day shows as missed.
+   push to both members' phones, skipping anyone who already posted. on a
+   together day, any photo means no ping at all.
+4. the photo can be taken any time that day, before or after the ping,
+   until midnight (your timezone). an empty day shows as missed.

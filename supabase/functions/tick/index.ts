@@ -1,7 +1,9 @@
 // tick: runs every minute (pg_cron -> this function).
 //
 // 1. makes sure every couple has a row for today, with a random ping time
-// 2. sends the web push for any day whose ping time has passed
+// 2. sends the web push for any day whose ping time has passed, skipping
+//    anyone who already took the day's photo (together day: any photo
+//    skips everyone; apart day: only people who haven't posted get it)
 //
 // env (set by scripts/provision.sh):
 //   CRON_SECRET, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT
@@ -43,7 +45,7 @@ Deno.serve(async (req) => {
     .update({ ping_sent_at: new Date().toISOString() })
     .is("ping_sent_at", null)
     .lte("ping_at", new Date().toISOString())
-    .select("id, couple_id");
+    .select("id, couple_id, mode");
   if (claimError) return json({ error: claimError.message }, 500);
 
   let sent = 0;
@@ -54,7 +56,12 @@ Deno.serve(async (req) => {
       .from("members")
       .select("user_id")
       .eq("couple_id", day.couple_id);
-    const userIds = (members ?? []).map((m) => m.user_id);
+    const { data: photos } = await db.from("photos").select("taken_by").eq("day_id", day.id);
+    const posted = new Set((photos ?? []).map((p) => p.taken_by));
+    const together = day.mode !== "apart";
+    if (together && posted.size > 0) continue; // today's photo is already in
+
+    const userIds = (members ?? []).map((m) => m.user_id).filter((id) => !posted.has(id));
     if (userIds.length === 0) continue;
 
     const { data: subs } = await db

@@ -35,8 +35,8 @@ export function TodayScreen({ booth, today, error, pushState, onRefresh, onOpenC
   const theirs = latest(photos.filter((p) => p.taken_by !== booth.userId));
   const anyPhoto = latest(photos);
 
-  // the ping counts as "arrived" once the server sent it, or once its time has passed.
-  // after that there's no timer: you have until midnight.
+  // you can take the day's photo any time. the ping is a nudge: it counts as
+  // "arrived" once the server sent it or its time passed. either way, until midnight.
   const arrivedAt = day.ping_sent_at ?? (new Date(day.ping_at).getTime() <= Date.now() ? day.ping_at : null);
 
   async function chooseMode(next: Mode) {
@@ -65,9 +65,9 @@ export function TodayScreen({ booth, today, error, pushState, onRefresh, onOpenC
               <div className="today__inside">
                 {!arrivedAt ? (
                   <>
-                    <span style={{ fontSize: 20, fontWeight: 700 }}>no ping yet</span>
+                    <span style={{ fontSize: 20, fontWeight: 700 }}>today's photo</span>
                     <span className="small">
-                      it'll come between {hourLabel(booth.couple.ping_window_start)} and {hourLabel(booth.couple.ping_window_end)}
+                      take it whenever you like. if you haven't by then, a ping will nudge you between {hourLabel(booth.couple.ping_window_start)} and {hourLabel(booth.couple.ping_window_end)}.
                     </span>
                   </>
                 ) : (
@@ -97,7 +97,6 @@ export function TodayScreen({ booth, today, error, pushState, onRefresh, onOpenC
 
         <PrimaryAction
           mode={mode}
-          arrived={Boolean(arrivedAt)}
           hasMine={Boolean(mine)}
           hasAny={Boolean(anyPhoto)}
           onOpenCamera={() => onOpenCamera(mode)}
@@ -163,20 +162,15 @@ function Half({ photo, url, label, waiting, date }: { photo: Photo | null; url?:
 
 function PrimaryAction({
   mode,
-  arrived,
   hasMine,
   hasAny,
   onOpenCamera,
 }: {
   mode: Mode;
-  arrived: boolean;
   hasMine: boolean;
   hasAny: boolean;
   onOpenCamera: () => void;
 }) {
-  if (!arrived && !hasAny) {
-    return <button className="button" type="button" disabled>waiting for the ping</button>;
-  }
   if (mode === "together") {
     if (!hasAny) return <button className="button" type="button" onClick={onOpenCamera}>take today's photo</button>;
     if (hasMine) return <button className="button button--quiet" type="button" onClick={onOpenCamera}>retake</button>;
