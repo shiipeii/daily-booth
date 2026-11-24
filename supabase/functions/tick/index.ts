@@ -1,40 +1,20 @@
 // tick: runs every minute (pg_cron -> this function).
 //
 // 1. makes sure every couple has a row for today, with a random ping time
-// 2. sends the web push for any day whose ping time has passed, skipping
+// 2. sends the daily ping for any day whose ping time has passed, skipping
 //    anyone who already took the day's photo (together day: any photo
 //    skips everyone; apart day: only people who haven't posted get it)
-//
-// env (set by scripts/provision.sh):
-//   CRON_SECRET, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT
-// provided by supabase automatically:
-//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
-import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import webpush from "npm:web-push@3.6.7";
+import { adminClient, isAuthorized, json, sendToUsers } from "../_shared/push.ts";
 
 const PING_MESSAGE = {
   title: "daily booth",
   body: "time for today's photo. together or apart, you have until midnight.",
-  url: "./",
 };
 
 Deno.serve(async (req) => {
-  if (req.headers.get("x-cron-secret") !== Deno.env.get("CRON_SECRET")) {
-    return new Response("unauthorized", { status: 401 });
-  }
-
-  const db = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    { auth: { persistSession: false } },
-  );
-
-  webpush.setVapidDetails(
-    Deno.env.get("VAPID_SUBJECT") ?? "mailto:hello@example.com",
-    Deno.env.get("VAPID_PUBLIC_KEY")!,
-    Deno.env.get("VAPID_PRIVATE_KEY")!,
-  );
+  if (!isAuthorized(req)) return new Response("unauthorized", { status: 401 });
+  const db = adminClient();
 
   const { error: ensureError } = await db.rpc("ensure_all_days");
   if (ensureError) return json({ error: ensureError.message }, 500);
@@ -52,50 +32,19 @@ Deno.serve(async (req) => {
   let removed = 0;
 
   for (const day of claimed ?? []) {
-    const { data: members } = await db
-      .from("members")
-      .select("user_id")
-      .eq("couple_id", day.couple_id);
-    const { data: photos } = await db.from("photos").select("taken_by").eq("day_id", day.id);
+    const [{ data: members }, { data: photos }] = await Promise.all([
+      db.from("members").select("user_id").eq("couple_id", day.couple_id),
+      db.from("photos").select("taken_by").eq("day_id", day.id),
+    ]);
     const posted = new Set((photos ?? []).map((p) => p.taken_by));
     const together = day.mode !== "apart";
     if (together && posted.size > 0) continue; // today's photo is already in
 
     const userIds = (members ?? []).map((m) => m.user_id).filter((id) => !posted.has(id));
-    if (userIds.length === 0) continue;
-
-    const { data: subs } = await db
-      .from("push_subscriptions")
-      .select("endpoint, p256dh, auth")
-      .in("user_id", userIds);
-
-    for (const sub of subs ?? []) {
-      try {
-        await webpush.sendNotification(
-          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          JSON.stringify({ ...PING_MESSAGE, dayId: day.id }),
-          { TTL: 60 * 60, urgency: "high" },
-        );
-        sent++;
-      } catch (err) {
-        const status = (err as { statusCode?: number }).statusCode;
-        if (status === 404 || status === 410) {
-          // the phone unsubscribed or reinstalled; forget this endpoint
-          await db.from("push_subscriptions").delete().eq("endpoint", sub.endpoint);
-          removed++;
-        } else {
-          console.error("push failed", status, (err as Error).message);
-        }
-      }
-    }
+    const result = await sendToUsers(db, userIds, { ...PING_MESSAGE, dayId: day.id });
+    sent += result.sent;
+    removed += result.removed;
   }
 
   return json({ days: claimed?.length ?? 0, sent, removed });
 });
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "content-type": "application/json" },
-  });
-}

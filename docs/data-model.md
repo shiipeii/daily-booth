@@ -47,3 +47,10 @@ status is never stored. the `day_summary` view works it out:
    together day, any photo means no ping at all.
 4. the photo can be taken any time that day, before or after the ping,
    until midnight (your timezone). an empty day shows as missed.
+
+## selfie alerts
+
+on an apart day, when someone posts their first selfie, a database trigger
+(`photos_notify_partner`) calls the `notify` edge function, which tells the
+other person: "ian took today's selfie. your turn…", or, if they'd already
+posted, "ian posted. today's strip is done." retakes don't notify again.

@@ -9,7 +9,7 @@
 # what it does:
 #   1. applies database migrations
 #   2. creates web push keys + the cron secret the first time, stores them in supabase
-#   3. deploys the `tick` function that sends the daily ping
+#   3. deploys the `tick` (daily ping) and `notify` (selfie alert) functions
 #   4. points auth at the web app and turns off email confirmation (two-person app)
 
 set -euo pipefail
@@ -69,8 +69,9 @@ else
   echo "  already set"
 fi
 
-echo "› deploying the ping function"
+echo "› deploying functions"
 supabase functions deploy tick --no-verify-jwt --use-api --yes
+supabase functions deploy notify --no-verify-jwt --use-api --yes
 
 echo "› auth settings"
 SITE="${SITE_URL:-http://localhost:5173}"

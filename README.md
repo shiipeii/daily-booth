@@ -24,6 +24,8 @@ web/                     the app (react + typescript + vite), installable on a p
 supabase/
   migrations/            database tables, security rules, the every-minute job
   functions/tick/        picks each day's random ping time and sends it
+  functions/notify/      tells the other person when a selfie is posted on an apart day
+  functions/_shared/     push sending used by both
 scripts/
   provision.sh           sets up / updates the backend (run by the deploy)
   backup.mjs             full backup of every table and photo
@@ -68,7 +70,7 @@ free services only: **supabase** (database, photo storage, the ping job) and
 - **ping hours:** in the app, settings → daily ping (default 10 am to 10 pm).
 - **film looks:** `FILMS` in `web/src/lib/film.ts`.
 - **colours:** `web/src/styles/tokens.css`.
-- **notification text:** `PING_MESSAGE` in `supabase/functions/tick/index.ts`.
+- **notification text:** `PING_MESSAGE` in `supabase/functions/tick/index.ts`, selfie alerts in `supabase/functions/notify/index.ts`.
 
 ## local development
 
